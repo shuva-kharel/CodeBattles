@@ -1,0 +1,146 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        // Primary colors (Blue in light, Purple in dark)
+        primary: {
+          50: 'var(--color-primary-50)',
+          100: 'var(--color-primary-100)',
+          200: 'var(--color-primary-200)',
+          300: 'var(--color-primary-300)',
+          400: 'var(--color-primary-400)',
+          500: 'var(--color-primary-500)',
+          600: 'var(--color-primary-600)',
+          700: 'var(--color-primary-700)',
+          800: 'var(--color-primary-800)',
+          900: 'var(--color-primary-900)',
+          950: 'var(--color-primary-950)',
+        },
+        // Secondary colors (Green variations)
+        secondary: {
+          50: 'var(--color-secondary-50)',
+          100: 'var(--color-secondary-100)',
+          200: 'var(--color-secondary-200)',
+          300: 'var(--color-secondary-300)',
+          400: 'var(--color-secondary-400)',
+          500: 'var(--color-secondary-500)',
+          600: 'var(--color-secondary-600)',
+          700: 'var(--color-secondary-700)',
+          800: 'var(--color-secondary-800)',
+          900: 'var(--color-secondary-900)',
+          950: 'var(--color-secondary-950)',
+        },
+        // Accent colors (Purple/Pink variations)
+        accent: {
+          50: 'var(--color-accent-50)',
+          100: 'var(--color-accent-100)',
+          200: 'var(--color-accent-200)',
+          300: 'var(--color-accent-300)',
+          400: 'var(--color-accent-400)',
+          500: 'var(--color-accent-500)',
+          600: 'var(--color-accent-600)',
+          700: 'var(--color-accent-700)',
+          800: 'var(--color-accent-800)',
+          900: 'var(--color-accent-900)',
+          950: 'var(--color-accent-950)',
+        },
+        // Semantic colors
+        success: {
+          50: 'var(--color-success-50)',
+          100: 'var(--color-success-100)',
+          500: 'var(--color-success-500)',
+          600: 'var(--color-success-600)',
+          700: 'var(--color-success-700)',
+        },
+        warning: {
+          50: 'var(--color-warning-50)',
+          100: 'var(--color-warning-100)',
+          500: 'var(--color-warning-500)',
+          600: 'var(--color-warning-600)',
+          700: 'var(--color-warning-700)',
+        },
+        error: {
+          50: 'var(--color-error-50)',
+          100: 'var(--color-error-100)',
+          500: 'var(--color-error-500)',
+          600: 'var(--color-error-600)',
+          700: 'var(--color-error-700)',
+        },
+        info: {
+          50: 'var(--color-info-50)',
+          100: 'var(--color-info-100)',
+          500: 'var(--color-info-500)',
+          600: 'var(--color-info-600)',
+          700: 'var(--color-info-700)',
+        },
+        // Theme-aware colors
+        'theme-bg': 'var(--color-background)',
+        'theme-bg-secondary': 'var(--color-background-secondary)',
+        'theme-bg-tertiary': 'var(--color-background-tertiary)',
+        'theme-surface': 'var(--color-surface)',
+        'theme-surface-elevated': 'var(--color-surface-elevated)',
+        'theme-surface-hover': 'var(--color-surface-hover)',
+        'theme-text': 'var(--color-text-primary)',
+        'theme-text-secondary': 'var(--color-text-secondary)',
+        'theme-text-tertiary': 'var(--color-text-tertiary)',
+        'theme-text-disabled': 'var(--color-text-disabled)',
+        'theme-text-inverse': 'var(--color-text-inverse)',
+        'theme-border': 'var(--color-border-primary)',
+        'theme-border-secondary': 'var(--color-border-secondary)',
+        'theme-border-focus': 'var(--color-border-focus)',
+      },
+      backgroundColor: {
+        'theme-primary': 'var(--color-interactive-primary)',
+        'theme-primary-hover': 'var(--color-interactive-primary-hover)',
+        'theme-secondary': 'var(--color-interactive-secondary)',
+        'theme-secondary-hover': 'var(--color-interactive-secondary-hover)',
+      },
+      borderColor: {
+        'theme-primary': 'var(--color-border-primary)',
+        'theme-secondary': 'var(--color-border-secondary)',
+        'theme-focus': 'var(--color-border-focus)',
+      },
+      textColor: {
+        'theme-primary': 'var(--color-text-primary)',
+        'theme-secondary': 'var(--color-text-secondary)',
+        'theme-tertiary': 'var(--color-text-tertiary)',
+        'theme-disabled': 'var(--color-text-disabled)',
+        'theme-inverse': 'var(--color-text-inverse)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.3s ease-in-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+        'scale-in': 'scaleIn 0.2s ease-out',
+        'loading': 'loading 1.5s infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        scaleIn: {
+          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        loading: {
+          '0%': { backgroundPosition: '200% 0' },
+          '100%': { backgroundPosition: '-200% 0' },
+        },
+      },
+      boxShadow: {
+        'theme-sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        'theme-md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'theme-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        'theme-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+      },
+    },
+  },
+  plugins: [],
+};
