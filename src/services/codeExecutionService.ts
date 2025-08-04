@@ -1,20 +1,59 @@
 import axios from "axios";
 
-// Judge0 API configuration
-const JUDGE0_API_URL = "https://judge0-ce.p.rapidapi.com";
-const RAPIDAPI_KEY =
-  import.meta.env.VITE_RAPIDAPI_KEY || "your-rapidapi-key-here";
+// Piston API configuration
+const PISTON_API_URL =
+  import.meta.env.VITE_PISTON_API_URL || "https://emkc.org/api/v2/piston";
 
-// Language IDs for Judge0 API
+// Language mappings for Piston API
 export const SUPPORTED_LANGUAGES = {
-  python: { id: 71, name: "Python 3.8.1", extension: "py" },
-  javascript: { id: 63, name: "JavaScript (Node.js 12.14.0)", extension: "js" },
-  cpp: { id: 54, name: "C++ (GCC 9.2.0)", extension: "cpp" },
-  java: { id: 62, name: "Java (OpenJDK 13.0.1)", extension: "java" },
-  c: { id: 50, name: "C (GCC 9.2.0)", extension: "c" },
-  csharp: { id: 51, name: "C# (Mono 6.6.0.161)", extension: "cs" },
-  go: { id: 60, name: "Go (1.13.5)", extension: "go" },
-  rust: { id: 73, name: "Rust (1.40.0)", extension: "rs" },
+  python: {
+    name: "python",
+    version: "3.10.0",
+    extension: "py",
+    runtime: "python",
+  },
+  javascript: {
+    name: "javascript",
+    version: "18.15.0",
+    extension: "js",
+    runtime: "node",
+  },
+  cpp: {
+    name: "cpp",
+    version: "10.2.0",
+    extension: "cpp",
+    runtime: "gcc",
+  },
+  java: {
+    name: "java",
+    version: "15.0.2",
+    extension: "java",
+    runtime: "java",
+  },
+  c: {
+    name: "c",
+    version: "10.2.0",
+    extension: "c",
+    runtime: "gcc",
+  },
+  csharp: {
+    name: "csharp",
+    version: "6.12.0",
+    extension: "cs",
+    runtime: "dotnet",
+  },
+  go: {
+    name: "go",
+    version: "1.16.2",
+    extension: "go",
+    runtime: "go",
+  },
+  rust: {
+    name: "rust",
+    version: "1.68.2",
+    extension: "rs",
+    runtime: "rust",
+  },
 } as const;
 
 export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
@@ -52,125 +91,21 @@ export interface TestCaseResult {
   errorMessage?: string;
 }
 
-export interface SubmissionResponse {
-  token: string;
-}
-
-export interface SubmissionStatus {
-  status: {
-    id: number;
-    description: string;
-  };
-  stdout?: string;
-  stderr?: string;
-  compile_output?: string;
-  time?: string;
-  memory?: number;
-  token: string;
-}
-
 class CodeExecutionService {
-  private apiKey: string;
   private baseURL: string;
 
   constructor() {
-    this.apiKey = RAPIDAPI_KEY;
-    this.baseURL = JUDGE0_API_URL;
+    this.baseURL = PISTON_API_URL;
   }
 
   private getHeaders() {
     return {
       "Content-Type": "application/json",
-      "X-RapidAPI-Key": this.apiKey,
-      "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
     };
   }
 
   /**
-   * Submit code for execution
-   */
-  private async submitCode(
-    sourceCode: string,
-    languageId: number,
-    stdin?: string
-  ): Promise<string> {
-    try {
-      const response = await axios.post<SubmissionResponse>(
-        `${this.baseURL}/submissions`,
-        {
-          source_code: btoa(sourceCode), // Base64 encode
-          language_id: languageId,
-          stdin: stdin ? btoa(stdin) : undefined,
-          cpu_time_limit: 2, // 2 seconds
-          memory_limit: 128000, // 128MB
-          wall_time_limit: 5, // 5 seconds
-          max_processes_and_or_threads: 60,
-          enable_per_process_and_thread_time_limit: false,
-          enable_per_process_and_thread_memory_limit: false,
-          max_file_size: 1024, // 1KB
-        },
-        {
-          headers: this.getHeaders(),
-          params: {
-            base64_encoded: "true",
-            wait: "false",
-          },
-        }
-      );
-
-      return response.data.token;
-    } catch (error) {
-      console.error("Error submitting code:", error);
-      throw new Error("Failed to submit code for execution");
-    }
-  }
-
-  /**
-   * Get submission status and results
-   */
-  private async getSubmissionStatus(token: string): Promise<SubmissionStatus> {
-    try {
-      const response = await axios.get<SubmissionStatus>(
-        `${this.baseURL}/submissions/${token}`,
-        {
-          headers: this.getHeaders(),
-          params: {
-            base64_encoded: "true",
-          },
-        }
-      );
-
-      return response.data;
-    } catch (error) {
-      console.error("Error getting submission status:", error);
-      throw new Error("Failed to get submission status");
-    }
-  }
-
-  /**
-   * Wait for submission to complete
-   */
-  private async waitForCompletion(
-    token: string,
-    maxAttempts = 30
-  ): Promise<SubmissionStatus> {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const status = await this.getSubmissionStatus(token);
-
-      // Status IDs: 1=In Queue, 2=Processing, 3=Accepted, 4=Wrong Answer, 5=Time Limit Exceeded, etc.
-      if (status.status.id > 2) {
-        return status;
-      }
-
-      // Wait 1 second before next attempt
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-
-    throw new Error("Execution timeout - submission took too long to complete");
-  }
-
-  /**
-   * Execute code against a single test case
+   * Execute code against a single test case using Piston
    */
   private async executeTestCase(
     sourceCode: string,
@@ -178,24 +113,36 @@ class CodeExecutionService {
     testCase: TestCase
   ): Promise<TestCaseResult> {
     const languageConfig = SUPPORTED_LANGUAGES[language];
+    const startTime = performance.now();
 
     try {
-      // Submit code for execution
-      const token = await this.submitCode(
-        sourceCode,
-        languageConfig.id,
-        testCase.input
+      const response = await axios.post(
+        `${this.baseURL}/execute`,
+        {
+          language: languageConfig.name,
+          version: languageConfig.version,
+          files: [
+            {
+              name: `main.${languageConfig.extension}`,
+              content: sourceCode,
+            },
+          ],
+          stdin: testCase.input,
+          args: [],
+          compile_timeout: 5000,
+          run_timeout: 3000,
+        },
+        {
+          headers: this.getHeaders(),
+        }
       );
 
-      // Wait for completion
-      const result = await this.waitForCompletion(token);
+      const result = response.data;
+      const executionTime = performance.now() - startTime;
 
-      // Decode base64 outputs
-      const actualOutput = result.stdout ? atob(result.stdout).trim() : "";
-      const errorOutput = result.stderr ? atob(result.stderr).trim() : "";
-      const compileOutput = result.compile_output
-        ? atob(result.compile_output).trim()
-        : "";
+      const actualOutput = result.run.stdout?.trim() || "";
+      const errorOutput = result.run.stderr?.trim() || "";
+      const compileOutput = result.compile?.stderr?.trim() || "";
 
       const expectedOutput = testCase.expectedOutput.trim();
       const passed = actualOutput === expectedOutput;
@@ -205,7 +152,7 @@ class CodeExecutionService {
         expectedOutput: expectedOutput,
         actualOutput: actualOutput,
         passed: passed,
-        executionTime: result.time ? parseFloat(result.time) : undefined,
+        executionTime: executionTime,
         errorMessage: errorOutput || compileOutput || undefined,
       };
     } catch (error) {
@@ -232,19 +179,12 @@ class CodeExecutionService {
       throw new Error(`Unsupported language: ${language}`);
     }
 
-    if (!this.apiKey || this.apiKey === "your-rapidapi-key-here") {
-      throw new Error(
-        "RapidAPI key not configured. Please set VITE_RAPIDAPI_KEY environment variable."
-      );
-    }
-
     const testResults: TestCaseResult[] = [];
     let totalExecutionTime = 0;
     let hasCompilationError = false;
     let hasRuntimeError = false;
     let compilationErrorMessage = "";
 
-    // Execute each test case
     for (const testCase of testCases) {
       const result = await this.executeTestCase(sourceCode, language, testCase);
       testResults.push(result);
@@ -256,7 +196,8 @@ class CodeExecutionService {
       if (result.errorMessage) {
         if (
           result.errorMessage.includes("compilation") ||
-          result.errorMessage.includes("syntax")
+          result.errorMessage.includes("syntax") ||
+          result.errorMessage.includes("compile")
         ) {
           hasCompilationError = true;
           compilationErrorMessage = result.errorMessage;
@@ -311,7 +252,7 @@ class CodeExecutionService {
   }
 
   /**
-   * Validate code syntax without execution (basic check)
+   * Validate code syntax without execution
    */
   validateSyntax(
     sourceCode: string,
@@ -319,12 +260,10 @@ class CodeExecutionService {
   ): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
-    // Basic syntax validation
     if (!sourceCode.trim()) {
       errors.push("Code cannot be empty");
     }
 
-    // Language-specific basic checks
     switch (language) {
       case "python":
         if (
@@ -350,7 +289,6 @@ class CodeExecutionService {
         break;
     }
 
-    // Check for potentially dangerous patterns
     const dangerousPatterns = [
       /system\s*\(/,
       /exec\s*\(/,
